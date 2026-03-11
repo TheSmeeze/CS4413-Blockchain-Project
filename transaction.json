@@ -1,0 +1,12 @@
+[
+    {
+        "sender": "turzabasak",
+        "amount": 100000.0,
+        "reciever": "basakturza"
+    },
+    {
+        "sender": "turzabasak",
+        "amount": 10000.0,
+        "reciever": "WITHDRAWAL"
+    }
+]

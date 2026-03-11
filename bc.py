@@ -7,7 +7,7 @@ import json, os
 
 #files
 USERS = "users.json"
-BLOCKCHAIN = "bc.json"
+BLOCKCHAIN = "transaction.json"
 
 #verifys existence of a user
 def verifyUser(username):
@@ -28,7 +28,7 @@ def loadFile(filename):
             return json.load(file)
         except json.JSONDecodeError:
             return []
-    
+
 def saveFile(filename, filedata):
     with open (filename,"w") as file:
         json.dump(filedata, file, indent = 4)
@@ -37,35 +37,113 @@ def saveFile(filename, filedata):
 #create user
 def createUser():
     name = input("Enter username: ")
-    user_file = loadFile(USERS)
     if verifyUser(name) == True:
         print("User already exists")
         return
-    amt = input("Enter a starting amt: ")
     new_user = {
         "username": name,
-        "balance": amt
+        "balance": 0
     }
     userlist = loadFile(USERS)
     userlist.append(new_user)
     saveFile(USERS, userlist)
+    print(f"User '{name}' created with balance $0.")
+    deposit_now = input("Would you like to make an initial deposit? (y/n): ").strip().lower()
+    if deposit_now == "y":
+        deposit(name)
 
 
-#creates transaction item -- for testing 
-#DOES NOT VERIFY SENDER HAS ENOUGH, 
-#DOES NOT REMOVE AMT FROM SENDER BALANCE, DOES NOT ENSURE "AMT" > 0, OR CHECKS AMT IS A NUMBER
+# turzabasak's version / work
+def deposit(username=None):
+    if username is None:
+        username = input("Enter username: ")
+    if not verifyUser(username):
+        print("User does not exist")
+        return
+    try:
+        amt = float(input("Enter deposit amount($): "))
+    except ValueError:
+        print("Invalid amount")
+        return
+    if amt <= 0:
+        print("Deposit amount must be greater than 0")
+        return
+    userlist = loadFile(USERS)
+    for user in userlist:
+        if user["username"] == username:
+            user["balance"] = float(user["balance"]) + amt
+            saveFile(USERS, userlist)
+            print(f"Deposited ${amt:.2f}. New balance: ${user['balance']:.2f}")
+            return
+
+
+def withdraw(username=None):
+    if username is None:
+        username = input("Enter username: ")
+    if not verifyUser(username):
+        print("User does not exist")
+        return
+    try:
+        amt = float(input("Enter withdrawal amount($): "))
+    except ValueError:
+        print("Invalid amount")
+        return
+    if amt <= 0:
+        print("Withdrawal amount must be greater than 0")
+        return
+    userlist = loadFile(USERS)
+    for user in userlist:
+        if user["username"] == username:
+            if float(user["balance"]) < amt:
+                print("Insufficient funds")
+                return
+            user["balance"] = float(user["balance"]) - amt
+            saveFile(USERS, userlist)
+            new_transaction = {
+                "sender": username,
+                "amount": amt,
+                "reciever": "WITHDRAWAL"
+            }
+            transList = loadFile(BLOCKCHAIN)
+            transList.append(new_transaction)
+            saveFile(BLOCKCHAIN, transList)
+            print(f"Withdrew ${amt:.2f}. New balance: ${user['balance']:.2f}")
+            return
+
+
+#creates transaction item
 def createTransaction():
     sender = input("Enter sender username: ")
-    if verifyUser(sender) == False:
+    if not verifyUser(sender):
         print("User does not exist")
         return
     reciever = input("Enter reciever username: ")
-    if verifyUser(reciever) == False:
+    if not verifyUser(reciever):
         print("User does not exist")
         return
-    chain_file = loadFile(BLOCKCHAIN)
-    #entered as a string (for now)
-    amt = input("Enter an amt($): ")
+    try:
+        amt = float(input("Enter an amt($): "))
+    except ValueError:
+        print("Invalid amount")
+        return
+    if amt <= 0:
+        print("Amount must be greater than 0")
+        return
+    userlist = loadFile(USERS)
+    sender_balance = None
+    for user in userlist:
+        if user["username"] == sender:
+            sender_balance = float(user["balance"])
+            break
+    if sender_balance < amt:
+        print("Insufficient funds")
+        return
+    for user in userlist:
+        if user["username"] == sender:
+            user["balance"] = sender_balance - amt
+        elif user["username"] == reciever:
+            user["balance"] = float(user["balance"]) + amt
+    saveFile(USERS, userlist)
     new_transaction = {
         "sender": sender,
         "amount": amt,
@@ -74,22 +152,35 @@ def createTransaction():
     transList = loadFile(BLOCKCHAIN)
     transList.append(new_transaction)
     saveFile(BLOCKCHAIN, transList)
+    print(f"Transaction complete: ${amt:.2f} sent from {sender} to {reciever}.")
 
 def main():
     #inits files (always needed to be done at begining of main to create files)
     loadFile(USERS)
     loadFile(BLOCKCHAIN)
-    
-    #testing users 
-    # seems to fully work 
-    # (made 2 distinct users, and caught a new user trying an already used username) - adam)
-    #createUser()
-    #createUser()
-    #createUser()
 
-   # createTransaction()
-   # createTransaction()
-    
+    while True:
+        print("\n--- Blockchain Menu ---")
+        print("1. Create User")
+        print("2. Deposit")
+        print("3. Withdraw")
+        print("4. Create Transaction")
+        print("5. Exit")
+        choice = input("Select an option: ").strip()
+
+        if choice == "1":
+            createUser()
+        elif choice == "2":
+            deposit()
+        elif choice == "3":
+            withdraw()
+        elif choice == "4":
+            createTransaction()
+        elif choice == "5":
+            print("Goodbye!")
+            break
+        else:
+            print("Invalid option, please try again.")
 
 if __name__ == "__main__":
     main()
