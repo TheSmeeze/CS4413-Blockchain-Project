@@ -1,0 +1,24 @@
+[
+    {
+        "username": "Ben",
+        "balance": 20.0,
+        "active": true
+    },
+    {
+        "username": "Adam",
+        "balance": 16.0,
+        "active": true
+    },
+    {
+        "username": "Bahari",
+        "balance": 0,
+        "active": false,
+        "Creation-Timestamp": "2026-03-16T14:48:26.992635"
+    },
+    {
+        "username": "Turza",
+        "balance": 5.0,
+        "active": true,
+        "creation-Timestamp": "2026-03-16T15:15:23.593307"
+    }
+]
