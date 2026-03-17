@@ -46,13 +46,13 @@ def createUser():
     userlist.append(new_user)
     saveFile(USERS, userlist)
     print(f"User '{name}' created with balance $0.")
-    deposit_now = input("Would you like to make an initial deposit? (y/n): ").strip().lower()
+    deposit_now = input("Would you like to make an initial deposit? (y/n): ").strip()
     if deposit_now == "y":
         deposit(name)
 
 
 def deposit():
-    username = input("Enter username: ").strip().lower()
+    username = input("Enter username: ").strip()
     if not verifyUser(username):
         print("\nUser does not exist")
         return
@@ -91,7 +91,7 @@ def deposit():
 
 
 def withdraw():
-    username = input("Enter username: ").strip().lower()
+    username = input("Enter username: ").strip()
     if not verifyUser(username):
         print("\nUser does not exist")
         return
@@ -137,7 +137,7 @@ def withdraw():
 
 #creates transaction item
 def createTransaction():
-    sender = input("Enter sender username: ").strip().lower()
+    sender = input("Enter sender username: ").strip()
     if not verifyUser(sender):
         print("\nUser does not exist")
         return
@@ -152,7 +152,7 @@ def createTransaction():
                 print("Transaction cancelled.\n")
                 return
             
-    reciever = input("Enter reciever username: ").strip().lower()
+    reciever = input("Enter reciever username: ").strip()
     if not verifyUser(reciever):
         print("\nUser does not exist")
         return
@@ -211,7 +211,7 @@ def user_status():
         if user["username"] == username:
             if user["active"]:
                 print(f"User: {username} status is Active")
-                decision = input("Would you like to Deactivate the user?(y/n)").strip().lower()
+                decision = input("Would you like to Deactivate the user?(y/n)").strip()
                 if decision == "y":
                     user["active"] = False
                     saveFile(USERS, userlist)
@@ -219,7 +219,7 @@ def user_status():
 
             else:
                 print(f"User: {username} status is Inactive")
-                decision = input("Would you like to Activate the user?(y/n)").strip().lower()
+                decision = input("Would you like to Activate the user?(y/n)").strip()
                 if decision == "y":
                     user["active"] = True
                     saveFile(USERS, userlist)

@@ -1,7 +1,7 @@
 [
     {
         "username": "Ben",
-        "balance": 20.0,
+        "balance": 19.9,
         "active": true
     },
     {
@@ -17,7 +17,7 @@
     },
     {
         "username": "Turza",
-        "balance": 5.0,
+        "balance": 5.1,
         "active": true,
         "creation-Timestamp": "2026-03-16T15:15:23.593307"
     }
