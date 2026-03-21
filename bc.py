@@ -3,6 +3,8 @@ import json, os, random
 from datetime import datetime
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import serialization, hashes
+from Crypto.PublicKey import ECC        # pycryptodome: raw EC point arithmetic
+from Crypto.Hash import SHA256
 
 #files
 USERS = "users.json"
@@ -458,7 +460,6 @@ def processMix():
     random.shuffle(pool)
 
     userlist = loadFile(USERS)
-    transList = loadFile(BLOCKCHAIN)
 
     for entry in pool:
         # credit the receiver
@@ -466,6 +467,12 @@ def processMix():
             if user["username"] == entry["receiver"]:
                 user["balance"] = float(user["balance"]) + entry["amount"]
                 break
+
+        # save users first so balance is updated before next iteration
+        saveFile(USERS, userlist)
+
+        # reload blockchain each iteration so getPrevHash() sees the latest tx
+        transList = loadFile(BLOCKCHAIN)
 
         # record as a mixed transaction — sender field is anonymized
         prev_hash = getPrevHash()
@@ -481,8 +488,8 @@ def processMix():
         }
         transList.append(tx)
 
-    saveFile(USERS, userlist)
-    saveFile(BLOCKCHAIN, transList)
+        # save after each tx so the next iteration gets the updated prev_hash
+        saveFile(BLOCKCHAIN, transList)
 
     # clear the pool after processing
     saveFile(MIX_POOL_FILE, [])
