@@ -1,24 +1,52 @@
 [
     {
         "username": "Ben",
-        "balance": 19.9,
-        "active": true
+        "balance": 1015.9,
+        "active": true,
+        "public_key": "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEJPT7xfhWXdmNqBd+Br5nkF1Zw10rXWzh\nmqv/lHmUt30ZVyFjG5/69fO1udL0syYlsEfauFuqRUqOoDvB+iD9qA==\n-----END PUBLIC KEY-----\n",
+        "salt": "e651eadb6970d1d42ae449b0da87f855",
+        "password_hash": "8fd7c152eb3091280541fc4807e2d53b6f1d27467cb8ce4fff783e9e6e458498"
     },
     {
         "username": "Adam",
-        "balance": 16.0,
-        "active": true
+        "balance": 3007.0,
+        "active": true,
+        "public_key": "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE62mr0aS23bv6NSywHaldr/bOBuY2NxtG\nr0ylFiEFfnEXeuHvN7c01A6EzdJTzxlvMqtQYsQSt2Yggdc09GdxYA==\n-----END PUBLIC KEY-----\n",
+        "salt": "96e4c330d4a5fdb5196b83ea99f5c633",
+        "password_hash": "21a48ecdf35ebb06b27b16c54fd2b114a84b5278490ce4899b05a46f341d5627"
     },
     {
         "username": "Bahari",
-        "balance": 0,
+        "balance": 15.0,
         "active": false,
-        "Creation-Timestamp": "2026-03-16T14:48:26.992635"
+        "Creation-Timestamp": "2026-03-16T14:48:26.992635",
+        "public_key": "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAElyFc0TgXPuMYoUBOsna1uVaqQS6w0D+Q\ns+y4sxom+8yysnl9FNfHAS/WlxL18knMbJ+lRZ5InZ3ECgz3n3BMYw==\n-----END PUBLIC KEY-----\n",
+        "salt": "467732cd1a8e3f11705066d685f2b40b",
+        "password_hash": "26e963e804d8b1b4e092e2c4b68ccc7084c8405735e8a7bd4dd547dcb5e8f087"
     },
     {
         "username": "Turza",
-        "balance": 5.1,
+        "balance": 4891.1,
         "active": true,
-        "creation-Timestamp": "2026-03-16T15:15:23.593307"
+        "creation-Timestamp": "2026-03-16T15:15:23.593307",
+        "public_key": "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEgygY9OL0slNW0/4C3tbqieCu9efj9co1\nFLIPPk9EiH3URV3D95EXIljAHDOIXZ5XWJ6ji7pkxlveJjqufIFHpA==\n-----END PUBLIC KEY-----\n",
+        "salt": "e4ae061047af7e3506b30934c0a08052",
+        "password_hash": "aef90c82cb97dd5be81c353813e92a5a73198eb323b9d14347362aff1e330709"
+    },
+    {
+        "username": "MIXER_POOL",
+        "balance": 105.0,
+        "active": true,
+        "creation-Timestamp": "2026-03-18T14:39:57.025432",
+        "public_key": "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE4o/MPrA9iUhPYI+GYliFjwPslN7oKZ8u\nEOyq4Avxv2rSy9Qx7ToY31caVAk5XSCjcQdaJax4fxGpEUTU3rKwbg==\n-----END PUBLIC KEY-----\n"
+    },
+    {
+        "username": "Munich",
+        "balance": 1000.0,
+        "active": true,
+        "creation-Timestamp": "2026-03-21T01:19:52.509907",
+        "public_key": "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEWH1GTL6Y/QHmNPaCRg2zTkjhVifUyq2w\nIdacUUf9HrtlcbZMD6i9gf5OiLjHBxMYZ16zHTOAYFguAr/oxhvIqg==\n-----END PUBLIC KEY-----\n",
+        "salt": "468125fd47fa9ed05ecf7e1d2deb3a1e",
+        "password_hash": "10529ef0172929f166ed137daf00bbac4e8a64d3b23623ce166e4d8612d0ad3a"
     }
 ]

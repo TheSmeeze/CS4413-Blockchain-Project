@@ -1,0 +1,20 @@
+[
+    {
+        "pool_id": "3d996151",
+        "pool_size": 4,
+        "deadline": "2026-03-21T02:42:22.269320",
+        "participants": [
+            {
+                "sender": "Turza",
+                "destination": "Ben",
+                "amount": 5.0
+            },
+            {
+                "sender": "Munich",
+                "destination": "Bahari",
+                "amount": 100.0
+            }
+        ],
+        "status": "open"
+    }
+]

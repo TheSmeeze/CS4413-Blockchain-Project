@@ -87,5 +87,190 @@
         "amount": 4.9,
         "reciever": "Ben",
         "timestamp": "2026-03-17T00:34:15.808017"
+    },
+    {
+        "transaction_id": "869fcd319dae8ea13e26103765ed04634d9464d4de72f65fc400fea154c22de0",
+        "prev_transaction_id": "19a4be149fcdd4e6c90d7bbd608e6677af693daee733a5d0521cb7bca31b341a",
+        "sender": "Turza",
+        "amount": 1.0,
+        "reciever": "MIXER_POOL",
+        "timestamp": "2026-03-18T14:40:38.122739"
+    },
+    {
+        "transaction_id": "d40cd6ce4179e24015edea3084e208f8aa65cb4af6a7287cecb779bbfbc46074",
+        "prev_transaction_id": "869fcd319dae8ea13e26103765ed04634d9464d4de72f65fc400fea154c22de0",
+        "sender": "Ben",
+        "amount": 2.0,
+        "reciever": "MIXER_POOL",
+        "timestamp": "2026-03-18T14:40:38.123725"
+    },
+    {
+        "transaction_id": "2e7752cd9ff39e9b5c68e2a0d088c7acc21b382230898049d1fd22e42e8f87d6",
+        "prev_transaction_id": "d40cd6ce4179e24015edea3084e208f8aa65cb4af6a7287cecb779bbfbc46074",
+        "sender": "MIXER_POOL",
+        "amount": 1.0,
+        "reciever": "Adam",
+        "timestamp": "2026-03-18T14:40:38.125179"
+    },
+    {
+        "transaction_id": "4764bb99d3ea354c8b1bfbb6b2a0ddf6ca994abc9d65c35d7608f57d70d8e92f",
+        "prev_transaction_id": "2e7752cd9ff39e9b5c68e2a0d088c7acc21b382230898049d1fd22e42e8f87d6",
+        "sender": "MIXER_POOL",
+        "amount": 2.0,
+        "reciever": "Turza",
+        "timestamp": "2026-03-18T14:40:38.125851"
+    },
+    {
+        "transaction_id": "8e41fc8d8bc601709a713865292372625483e2fc011a236bb0e024380699ff2e",
+        "prev_transaction_id": "4764bb99d3ea354c8b1bfbb6b2a0ddf6ca994abc9d65c35d7608f57d70d8e92f",
+        "sender": "DEPOSIT",
+        "amount": 5000.0,
+        "reciever": "Turza",
+        "timestamp": "2026-03-21T01:18:35.874640"
+    },
+    {
+        "transaction_id": "c4cce45149ab64abd7ca1cdf7cbd6c507d4549295644d4d6b056e7e3d0ebcfe4",
+        "prev_transaction_id": "8e41fc8d8bc601709a713865292372625483e2fc011a236bb0e024380699ff2e",
+        "sender": "DEPOSIT",
+        "amount": 4000.0,
+        "reciever": "Adam",
+        "timestamp": "2026-03-21T01:18:51.993686"
+    },
+    {
+        "transaction_id": "97526b281c81295d7b91e70c238f379ad02a1cf474bbaeb350e7b0596803d77c",
+        "prev_transaction_id": "c4cce45149ab64abd7ca1cdf7cbd6c507d4549295644d4d6b056e7e3d0ebcfe4",
+        "sender": "DEPOSIT",
+        "amount": 1000.0,
+        "reciever": "Munich",
+        "timestamp": "2026-03-21T01:20:01.056850"
+    },
+    {
+        "transaction_id": "67030c2c2d5c04cc98620d36010a141936424ee522faad4ea239007052552b32",
+        "prev_transaction_id": "97526b281c81295d7b91e70c238f379ad02a1cf474bbaeb350e7b0596803d77c",
+        "sender": "Turza",
+        "amount": 100.0,
+        "reciever": "MIXER_POOL",
+        "timestamp": "2026-03-21T01:21:18.596655",
+        "signature": "304402204020ee5f006927f8e9153beacd2c9096104d76168847b4b08c7ad5da0b09d260022041567c44b0ef7756b98a67f9379c42d2812eea120fb3dfa84f8fb0878c3fc056"
+    },
+    {
+        "transaction_id": "6b3171040197d748476f9519d1168bb423839e7705850ba5a3b69565e2d1fc86",
+        "prev_transaction_id": "67030c2c2d5c04cc98620d36010a141936424ee522faad4ea239007052552b32",
+        "sender": "Ben",
+        "amount": 5.0,
+        "reciever": "MIXER_POOL",
+        "timestamp": "2026-03-21T01:21:18.619247",
+        "signature": "30440220734a6b7905ba5862ccac9b0cc0833a777889e0e8e16ea91edb87480dcfb8f18e022071634a2d9206cfdf2007f6b2c076e2f07cb7b78917e4a54d9f9683b3532bcc46"
+    },
+    {
+        "transaction_id": "0f75e330fd2bc8e7907cdac6cb425f582f93fe7e2ab064b78e84474115e0795a",
+        "prev_transaction_id": "6b3171040197d748476f9519d1168bb423839e7705850ba5a3b69565e2d1fc86",
+        "sender": "Adam",
+        "amount": 1000.0,
+        "reciever": "MIXER_POOL",
+        "timestamp": "2026-03-21T01:21:18.624153",
+        "signature": "30440220722f4c2e147d7360612363d83004bc5de484cdca27bff500ffe52e8bf6e6103c02200e30a6f457eaa76cc1530649b2b485e4e5247cdfc4685ebd1970431f7a242460"
+    },
+    {
+        "transaction_id": "5e1a3f56e055c1eb8debd5c710dc16fbeebe747fda0be3cd8afa5c4c8d97b923",
+        "prev_transaction_id": "0f75e330fd2bc8e7907cdac6cb425f582f93fe7e2ab064b78e84474115e0795a",
+        "sender": "MIXER_POOL",
+        "amount": 100.0,
+        "reciever": "Munich",
+        "timestamp": "2026-03-21T01:21:18.628658"
+    },
+    {
+        "transaction_id": "02cbcae9d02d76e57e369ca4185b6dc9cbe5d32f2d4d00c8b27095dcc326bc1e",
+        "prev_transaction_id": "5e1a3f56e055c1eb8debd5c710dc16fbeebe747fda0be3cd8afa5c4c8d97b923",
+        "sender": "MIXER_POOL",
+        "amount": 1000.0,
+        "reciever": "Ben",
+        "timestamp": "2026-03-21T01:21:18.629389"
+    },
+    {
+        "transaction_id": "bb8735bdfdd5cf574494193cc4a3905dd939efdbcf72163c2afe3a994cab8a37",
+        "prev_transaction_id": "02cbcae9d02d76e57e369ca4185b6dc9cbe5d32f2d4d00c8b27095dcc326bc1e",
+        "sender": "MIXER_POOL",
+        "amount": 5.0,
+        "reciever": "Bahari",
+        "timestamp": "2026-03-21T01:21:18.629946"
+    },
+    {
+        "transaction_id": "eb014e3a3532234b5d72f4829493229e02151dd4e8108df7c00bf4e56c38daf3",
+        "prev_transaction_id": "bb8735bdfdd5cf574494193cc4a3905dd939efdbcf72163c2afe3a994cab8a37",
+        "sender": "Ben",
+        "amount": 1.0,
+        "reciever": "MIXER_POOL",
+        "timestamp": "2026-03-21T01:53:54.820327",
+        "signature": "30450221008feb146e19977219a9d9a97ce76a065c83e641369e2d449fb64aafa775d7168e02206d3e55a1054d20a4f73b742f45595f077066d5a832d0a75ea978a0137a544f65"
+    },
+    {
+        "transaction_id": "51a30789ce49f85670e6ad9632e1bfb4b268c36d4c8bec8b1c2ce207d6349a17",
+        "prev_transaction_id": "eb014e3a3532234b5d72f4829493229e02151dd4e8108df7c00bf4e56c38daf3",
+        "sender": "Turza",
+        "amount": 10.0,
+        "reciever": "MIXER_POOL",
+        "timestamp": "2026-03-21T02:00:01.576556",
+        "signature": "3046022100c54411658f2a7461ac822241939f4fd3b3f838c7b842ff168c6b75641d3b5d16022100bb3ea072bb2e2ceac06637aefb696f821bbc9f374828abd89eab7a8003e3c395"
+    },
+    {
+        "transaction_id": "97d2ceb6362eb1ffeb1bf5149a8567744ac71e6fe5c014f2af1b1edbbb0e519e",
+        "prev_transaction_id": "51a30789ce49f85670e6ad9632e1bfb4b268c36d4c8bec8b1c2ce207d6349a17",
+        "sender": "Adam",
+        "amount": 10.0,
+        "reciever": "MIXER_POOL",
+        "timestamp": "2026-03-21T02:00:20.068261",
+        "signature": "3045022100ee4ef7730a10ff4e24ecc7e9c7a4c300264fa3b49bb5a6ef74565477c655738402200a06e3a210ad1259bcc31940b98e429eb5c1eb9d8cb6d59b3d28c48c6f4d34c9"
+    },
+    {
+        "transaction_id": "d67db57b64ced62db272c665ec45c2b5ae3387cf949f2359d182596eb3cf0f27",
+        "prev_transaction_id": "97d2ceb6362eb1ffeb1bf5149a8567744ac71e6fe5c014f2af1b1edbbb0e519e",
+        "sender": "Munich",
+        "amount": 10.0,
+        "reciever": "MIXER_POOL",
+        "timestamp": "2026-03-21T02:00:43.581908",
+        "signature": "304402201c2df48c8cbb81bb206bccad7c328157f051ee11dbf23ade46bd361a79e03d6f02201ef9d309ff9695c8bc0a1dd66d2c5b6b45fb471708100ed09c2704de410e960d"
+    },
+    {
+        "transaction_id": "608d81cf6940c2bfd32ac2ea64ff414291b53a46fdbe9f6131beb2da00750552",
+        "prev_transaction_id": "d67db57b64ced62db272c665ec45c2b5ae3387cf949f2359d182596eb3cf0f27",
+        "sender": "MIXER_POOL",
+        "amount": 10.0,
+        "reciever": "Bahari",
+        "timestamp": "2026-03-21T02:00:43.592985"
+    },
+    {
+        "transaction_id": "a4785a77a0e18e840e27caa3ed1493185c5d53376dbef520a0fa679600d30b5f",
+        "prev_transaction_id": "608d81cf6940c2bfd32ac2ea64ff414291b53a46fdbe9f6131beb2da00750552",
+        "sender": "MIXER_POOL",
+        "amount": 10.0,
+        "reciever": "Ben",
+        "timestamp": "2026-03-21T02:00:43.593862"
+    },
+    {
+        "transaction_id": "22ae1e6cbd7424c6375430dff1417109d1d4d4066fec78ce2deedb4438a28f00",
+        "prev_transaction_id": "a4785a77a0e18e840e27caa3ed1493185c5d53376dbef520a0fa679600d30b5f",
+        "sender": "MIXER_POOL",
+        "amount": 10.0,
+        "reciever": "Munich",
+        "timestamp": "2026-03-21T02:00:43.594679"
+    },
+    {
+        "transaction_id": "29983ca6c31f099961c761271ee5a1e058e2dcdfa10782adf60b2b52cee76fb8",
+        "prev_transaction_id": "22ae1e6cbd7424c6375430dff1417109d1d4d4066fec78ce2deedb4438a28f00",
+        "sender": "Turza",
+        "amount": 5.0,
+        "reciever": "MIXER_POOL",
+        "timestamp": "2026-03-21T02:05:06.871569",
+        "signature": "30450220546900761aad5c29186b74305ce39dcf8392151eb1afe41177cf8a09282c4ea4022100e8354a8cb6f93f3279ac33400a986e98686b0211d0b43cbe0e3e28702f33afa4"
+    },
+    {
+        "transaction_id": "a5c699284237b2a7f1940749b28ace62ad9d0672f43401378db98f9af3ac493d",
+        "prev_transaction_id": "29983ca6c31f099961c761271ee5a1e058e2dcdfa10782adf60b2b52cee76fb8",
+        "sender": "Munich",
+        "amount": 100.0,
+        "reciever": "MIXER_POOL",
+        "timestamp": "2026-03-21T02:11:56.810285",
+        "signature": "3046022100eba5ec66d2906586a68e7a898ed180447bd5eb3be4743089e43cfaf950b7b192022100e00fee4aa63bc42ba555b893a07f91342cc9ba752a5b7eea503431fde4d5e9c6"
     }
 ]
