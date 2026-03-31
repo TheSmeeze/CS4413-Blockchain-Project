@@ -97,11 +97,10 @@ python bc.py
 1.  Create User
 2.  Deposit
 3.  Withdraw
-4.  Create Transaction       (Direct or Mixer)
-5.  Ring Transaction         (Anonymous)
-6.  Status Check
-7.  Check Balance
-8.  View Public Key
-9.  Verify Transaction
-10. Exit
+4.  Create Transaction       (Direct or, Mixer + Ring Sig. or, Standalone Ring Sig.)
+5.  Status Check
+6.  Check Balance
+7.  View Public Key
+8.  Verify Transaction
+9. Exit
 ```
