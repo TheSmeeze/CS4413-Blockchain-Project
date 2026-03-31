@@ -6,6 +6,7 @@ credentials.json
 transaction.json
 users.json
 mix_pool.json
+key_images.json
 chain_data/
 
 # Keys (never commit private keys)

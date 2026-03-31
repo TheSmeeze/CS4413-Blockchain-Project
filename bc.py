@@ -1,17 +1,16 @@
 import hashlib
 import json, os, random, getpass
-from datetime import datetime
+from datetime import datetime, timedelta
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import serialization, hashes
-from Cryptodome.PublicKey import ECC
-from Cryptodome.Hash import SHA256
-from Cryptodome.Util.number import bytes_to_long, long_to_bytes
+from Cryptodome.Util.number import bytes_to_long
 
 #files
 USERS = "users.json"
 BLOCKCHAIN = "transaction.json"
 KEYS_DIR = "keys"
 MIX_POOL_FILE = "mix_pool.json"
+KEY_IMAGES_FILE = "key_images.json"  # private store — never committed to git
 
 SYSTEM_ACCOUNTS = {"MIXER_POOL", "DEPOSIT", "WITHDRAWAL", "MIXER"}
 
@@ -98,12 +97,11 @@ def authenticateUser(username):
 
 # verifies existence of a user
 def verifyUser(username):
-    with open(USERS, "r"):
-        user_list = loadFile(USERS)
-        for user in user_list:
-            if user["username"] == username:
-                return True
-        return False
+    user_list = loadFile(USERS)
+    for user in user_list:
+        if user["username"] == username:
+            return True
+    return False
 
 def loadFile(filename):
     if not os.path.exists(filename):
@@ -134,6 +132,24 @@ def generateTransactionID(prev_hash, sender, reciever, amount):
     timestamp = datetime.now().isoformat()
     raw = prev_hash + sender + reciever + str(amount) + timestamp
     return hashlib.sha256(raw.encode()).hexdigest()
+
+def computeKeyImage(username, tx_id):
+    """Compute a per-transaction key image: I = sk * H(PK || tx_id) mod order.
+    Unique per transaction — same user can sign multiple different transactions.
+    A double-spend only occurs if someone submits the exact same tx_id twice."""
+    sk, _ = pem_to_ecc_keypair(username)
+    pt = _get_pub_xy(username)
+    if pt is None:
+        return None
+    px, py = pt
+    order = get_curve_order()
+    key_image = (hash_to_scalar(px.to_bytes(32, 'big') + py.to_bytes(32, 'big') + tx_id.encode()) * sk) % order
+    return hex(key_image)
+
+def isDoubleSpend(key_image_hex):
+    """Check if a key image has already been used — stored privately in key_images.json."""
+    images = loadFile(KEY_IMAGES_FILE)
+    return key_image_hex in images
 
 def logTransaction(sender, reciever, amt, sign_as=None, ring_sign=None, auto_sign=False):
     prev_hash = getPrevHash()
@@ -230,7 +246,7 @@ def deposit(username=None, skip_auth=False):
 
     target_user["balance"] = float(target_user["balance"]) + amt
     saveFile(USERS, userlist)
-    logTransaction("DEPOSIT", username, amt)
+    logTransaction("DEPOSIT", username, amt, sign_as=username)
     print(f"Deposited ${amt:.2f}.")
     print(f"Updated balance of {target_user['username']}: ${target_user['balance']:.2f}")
 
@@ -292,10 +308,13 @@ def ensureMixerPool():
     saveFile(USERS, userlist)
 
 def _settleMix(pool):
-    """Settle a mix pool: Phase 1 logged already at join time. Phase 2: shuffle → MIXER_POOL → destinations."""
+    """Settle a mix pool: shuffle outputs then ring-sign each payout using pool participants as the ring."""
     participants = pool["participants"]
     payouts = [{"destination": p["destination"], "amount": p["amount"]} for p in participants]
     random.shuffle(payouts)
+
+    # all pool senders form the ring — any one of them could be the signer
+    ring_members = [p["sender"] for p in participants]
 
     userlist = loadFile(USERS)
     for payout in payouts:
@@ -306,11 +325,14 @@ def _settleMix(pool):
                 u["balance"] = float(u["balance"]) + payout["amount"]
     saveFile(USERS, userlist)
 
-    for payout in payouts:
-        # mixer settles anonymously - no individual signature, sender is MIXER_POOL
-        logTransaction("MIXER_POOL", payout["destination"], payout["amount"])
+    # each payout uses a different signer so no key image is reused (no double-spend false positive)
+    shuffled_signers = ring_members[:]
+    random.shuffle(shuffled_signers)
+    for payout, signer in zip(payouts, shuffled_signers):
+        logTransaction("MIXER_POOL", payout["destination"], payout["amount"],
+                       ring_sign=(ring_members, signer), auto_sign=True)
 
-    print(f"Mix complete. {len(participants)} transactions settled anonymously.")
+    print(f"Mix complete. {len(participants)} transactions anonymised with ring signatures.")
 
 def _refundMix(pool):
     """Refund all locked funds back to senders (pool expired with too few participants)."""
@@ -322,6 +344,9 @@ def _refundMix(pool):
             elif u["username"] == "MIXER_POOL":
                 u["balance"] = float(u["balance"]) - p["amount"]
     saveFile(USERS, userlist)
+    # log each refund so there is an audit trail of returned funds
+    for p in pool["participants"]:
+        logTransaction("MIXER_POOL", p["sender"], p["amount"])
     print(f"Pool '{pool['pool_id']}' expired with only {len(pool['participants'])}/{MIN_MIX_PARTICIPANTS} participants. Funds refunded.")
 
 def checkExpiredPools():
@@ -376,7 +401,6 @@ def createMixPool():
         print("Time limit must be greater than 0.")
         return
 
-    from datetime import timedelta
     deadline = (datetime.now() + timedelta(minutes=minutes)).isoformat()
     pool_id = hashlib.sha256((deadline + str(pool_size)).encode()).hexdigest()[:8]
 
@@ -485,10 +509,8 @@ def joinMixPool(pool_id=None):
     saveFile(MIX_POOL_FILE, pools)
     print(f"Joined pool '{pool_id}'. Participants: {len(pool['participants'])}/{pool['pool_size']}.")
 
-    # auto-settle if pool is full
-    if len(pool["participants"]) >= pool["pool_size"]:
-        pass
-    else:
+    # prompt to add another participant if pool isn't full yet
+    if len(pool["participants"]) < pool["pool_size"]:
         add_another = input("Would you like to add another participant to this pool now? (y/n): ").strip().lower()
         if add_another == "y":
             joinMixPool(pool_id)
@@ -521,11 +543,16 @@ def runMixer():
 # creates transaction item
 def createTransaction():
     print("\n  1. Normal Transaction")
-    print("  2. Mixer (anonymous)")
+    print("  2. Mixer + Ring Signature (anonymous)")
+    print("  3. Ring Signature only (anonymous)")
     tx_type = input("  Select type: ").strip()
 
     if tx_type == "2":
         runMixer()
+        return
+
+    if tx_type == "3":
+        createRingTransaction()
         return
 
     if tx_type != "1":
@@ -602,7 +629,8 @@ def createTransaction():
             print("Transaction cancelled: could not sign.")
             return
         tx_data["signature"] = signature
-        tx_data_without_sig = {k: v for k, v in tx_data.items() if k != "signature"}
+        tx_data["sig_type"] = "ECDSA"
+        tx_data_without_sig = {k: v for k, v in tx_data.items() if k not in ["signature", "sig_type"]}
         if verifySignature(sender, tx_data_without_sig, signature):
             print("Signature verified.")
         else:
@@ -675,7 +703,6 @@ def verifyTransaction():
             if not signature:
                 print("This transaction has no signature (deposit/withdrawal/mixed).")
                 return
-            #tx_data = {k: v for k, v in tx.items() if k != "signature"}
             tx_data = {k: v for k, v in tx.items() if k not in ["signature", "sig_type"]}
             
             if sig_type == "Ring":
@@ -685,8 +712,10 @@ def verifyTransaction():
                 else:
                     print("Ring signature INVALID. Transaction may have been tampered with.")                                                                         
             
-            else:                                                                             
-                if verifySignature(sender, tx_data, signature):                                                                       
+            else:
+                # for DEPOSIT the receiver signed it, for all others the sender signed it
+                signer = tx.get("reciever") if sender == "DEPOSIT" else sender
+                if verifySignature(signer, tx_data, signature):
                     print("Signature valid. Transaction was authorized by sender.")
                 else:
                     print("Signature INVALID. Transaction may have been tampered with.")
@@ -744,54 +773,48 @@ def setMissingPasswords():
 
 #ECC helper functions for ring signatures
 
+# SECP256K1 curve parameters
+_SECP256K1_P     = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
+_SECP256K1_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+_SECP256K1_Gx    = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798
+_SECP256K1_Gy    = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8
+
 def get_curve_order():
-    """SECP256K1 curve order (Bitcoin standard)"""
-    return 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+    return _SECP256K1_ORDER
+
+def _point_add(P, Q, p=_SECP256K1_P):
+    """Add two EC points on SECP256K1."""
+    if P is None: return Q
+    if Q is None: return P
+    x1, y1 = P; x2, y2 = Q
+    if x1 == x2:
+        if y1 != y2: return None  # point at infinity
+        # point doubling
+        lam = (3 * x1 * x1) * pow(2 * y1, p - 2, p) % p
+    else:
+        lam = (y2 - y1) * pow(x2 - x1, p - 2, p) % p
+    x3 = (lam * lam - x1 - x2) % p
+    y3 = (lam * (x1 - x3) - y1) % p
+    return x3, y3
+
+def _point_mul(k, P, p=_SECP256K1_P):
+    """Scalar multiplication k*P using double-and-add."""
+    k = k % _SECP256K1_ORDER
+    R = None
+    while k:
+        if k & 1:
+            R = _point_add(R, P, p)
+        P = _point_add(P, P, p)
+        k >>= 1
+    return R
 
 def pem_to_ecc_keypair(username):
     """Load PEM private key → (secret_key_int, public_point_tuple)"""
-    private_key = loadPrivateKey(username)  # Existing function
+    private_key = loadPrivateKey(username)
     private_value = private_key.private_numbers().private_value
     x = private_key.private_numbers().public_numbers.x
     y = private_key.private_numbers().public_numbers.y
     return private_value, (x, y)
-
-#converts ECC point to bytes for hashing/signing
-def ecc_to_bytes(ecc_point):
-    return ecc_point.export_key(format='SEC1')
-
-#converts bytes back to ECC point for verification
-def bytes_to_ecc(bytes_data, curve='NIST256p'):
-    key = ECC.construct(curve=curve, x=0, y=0)  # dummy point to get curve
-    return ECC.construct(curve=curve, point_x=int.from_bytes(bytes_data[:32], 'big'))
-
-#performs scaler multiplication on ECC point (for ring signature math)
-def ecc_scalar_mult(scalar, point):
-    return point * scalar
-
-def get_public_keys_from_ring(usernames):
-    """Get list of public key points for all users in ring."""
-    userlist = loadFile(USERS)
-    pub_points = []
-    
-    for username in usernames:
-        user_data = next((u for u in userlist if u["username"] == username), None)
-        if not user_data:
-            return None
-        
-        pub_pem = user_data.get("public_key")
-        if not pub_pem:
-            return None
-        
-        try:
-            pub_key = serialization.load_pem_public_key(pub_pem.encode())
-            x = pub_key.public_numbers().x
-            y = pub_key.public_numbers().y
-            pub_points.append((x, y))
-        except Exception:
-            return None
-    
-    return pub_points
 
 #ring sig helpers
 
@@ -810,7 +833,8 @@ def hash_to_scalar(data, order=None):
 # Signs a message as "one of N users" without revealing which one.
 # A key image ties each signer to their signatures for double-spend detection.
 
-def _pub_point(username):
+
+def _get_pub_xy(username):
     """Load a user's public key as (x, y) integers from users.json."""
     userlist = loadFile(USERS)
     for u in userlist:
@@ -823,102 +847,120 @@ def _pub_point(username):
             return nums.x, nums.y
     return None
 
-def _hash_point(x, y):
-    """Hash an EC point (x,y) to a scalar — used to chain ring challenges."""
-    data = x.to_bytes(32, 'big') + y.to_bytes(32, 'big')
-    return bytes_to_long(hashlib.sha256(data).digest())
-
-def signRingTransaction(signer_username, ring_usernames, tx_data):
+def signRingTransaction(ring_usernames, tx_data, signer_index, signer_username, auto_sign=False):
     """
     Ring signature (LSAG)
     - Real signer uses private key to close the ring.
     - Decoys use random responses.
-    - Chain always starts at index 0 so verify can replay it the same way.
+    - auto_sign=True skips password prompt (used by mixer settlement).
 
-    Returns a dict with: c0, responses, ring_members, key_image
+    Returns a dict with: challenges, responses, ring_members, message_hash
     """
+    # auto_sign means no interactive auth needed (mixer calls this without a user present)
+    if not auto_sign and not authenticateUser(signer_username):
+        return None
+
     order = get_curve_order()
     n = len(ring_usernames)
-    signer_idx = ring_usernames.index(signer_username)
+    signer_idx = signer_index
 
     # load real signer's private key scalar
     sk, _ = pem_to_ecc_keypair(signer_username)
 
     # message hash - what we're committing to
     message = json.dumps(tx_data, sort_keys=True).encode()
-    msg_hash = hashlib.sha256(message).digest()
-
-    # key image: I = sk * H(PK) - deterministic per signer, used for double-spend detection
-    px, py = _pub_point(signer_username)
-    key_image_scalar = (_hash_point(px, py) * sk) % order
+    message_hash = hashlib.sha256(message).digest()
 
     # random commitment scalar for the real signer
-    alpha = random.randint(1, order - 1)
+    w = random.randint(1, order - 1)
 
     # random responses for all positions (signer's will be overwritten to close the ring)
-    responses = [random.randint(1, order - 1) for _ in range(n)]
+    challenges = [None] * n
+    responses = [None] * n
 
-    # Step 1: compute challenge at signer_idx from alpha
-    # c[signer_idx] = H(msg || alpha)
-    seed_data = msg_hash + alpha.to_bytes(32, 'big')
-    c_signer = bytes_to_long(hashlib.sha256(seed_data).digest()) % order
+    # load all ring members' public key coordinates — needed for challenge computation
+    pub_points = []
+    for username in ring_usernames:
+        pt = _get_pub_xy(username)
+        if pt is None:
+            print(f"Could not load public key for ring member '{username}'.")
+            return None
+        pub_points.append(pt)
 
-    # Step 2: propagate challenges forward from signer_idx+1 to signer_idx (wrapping)
-    challenges = [0] * n
-    challenges[signer_idx] = c_signer
+    G = (_SECP256K1_Gx, _SECP256K1_Gy)
 
+    def _commitment(r, c, PK):
+        """Compute r*G + c*PK — the EC commitment point."""
+        return _point_add(_point_mul(r, G), _point_mul(c, PK))
+
+    def _challenge(commit_pt):
+        """Hash the commitment point into a scalar challenge."""
+        cx, cy = commit_pt
+        return hash_to_scalar(message_hash + cx.to_bytes(32, 'big') + cy.to_bytes(32, 'big'), order)
+
+    # Phase 1: signer's commitment using random scalar w → c[signer+1]
+    commit_w = _point_mul(w, G)
+    next_c = _challenge(commit_w)
+
+    # Phase 2: propagate challenges forward from signer+1 around the ring
+    # Each decoy: pick random r[i], compute commitment r[i]*G + c[i]*PK[i], hash to get c[i+1]
     for step in range(1, n):
-        i     = (signer_idx + step) % n
-        prev  = (signer_idx + step - 1) % n
-        px_prev, py_prev = _pub_point(ring_usernames[prev])
-        chain_data = (msg_hash
-                      + responses[prev].to_bytes(32, 'big')
-                      + challenges[prev].to_bytes(32, 'big')
-                      + px_prev.to_bytes(32, 'big')
-                      + py_prev.to_bytes(32, 'big'))
-        challenges[i] = bytes_to_long(hashlib.sha256(chain_data).digest()) % order
+        i = (signer_idx + step) % n
+        responses[i] = random.randint(1, order - 1)
+        challenges[i] = next_c
+        commit = _commitment(responses[i], challenges[i], pub_points[i])
+        next_c = _challenge(commit)
 
-    # Step 3: close the ring - solve for signer's response
-    # The chain will arrive back at signer_idx with challenges[signer_idx].
-    # We need: verify starting from c0 and chaining through to reproduce c[signer_idx].
-    # So set: s_signer = alpha - c_signer * sk  (mod order)
-    responses[signer_idx] = (alpha - c_signer * sk) % order
+    # Phase 3: close the ring — signer's challenge is the one that wraps back
+    challenges[signer_idx] = next_c
+    # signer's response: r = w - c*sk  (so r*G + c*PK = w*G)
+    responses[signer_idx] = (w - challenges[signer_idx] * sk) % order
 
-    # c0 is challenges[0] — verification always starts here
     return {
-        "c0": hex(challenges[0]),
+        "challenges": [hex(c) for c in challenges],
         "responses": [hex(r) for r in responses],
         "ring_members": ring_usernames,
-        "key_image": hex(key_image_scalar)
+        "message_hash": message_hash.hex()
     }
 
 def verifyRingSignature(ring_usernames, tx_data, ring_sig):
     """
-    Replay the ring chain from c0 through all N members.
-    Valid if the chain produces the same c0 at the end.
+    Verify ring signature using EC commitments: r[i]*G + c[i]*PK[i]
+    Each commitment hashes to the next challenge — the ring must close perfectly.
     """
     order = get_curve_order()
+    G = (_SECP256K1_Gx, _SECP256K1_Gy)
     message = json.dumps(tx_data, sort_keys=True).encode()
-    msg_hash = hashlib.sha256(message).digest()
+    message_hash = hashlib.sha256(message).digest()
 
-    responses = [int(r, 16) for r in ring_sig["responses"]]
-    c0 = int(ring_sig["c0"], 16)
+    if ring_sig.get("message_hash") != message_hash.hex():
+        return False
+
+    challenges = [int(c, 16) for c in ring_sig["challenges"]]
+    responses  = [int(r, 16) for r in ring_sig["responses"]]
     n = len(ring_usernames)
 
-    c = c0
-    for i in range(n):
-        px_i, py_i = _pub_point(ring_usernames[i])
-        if px_i is None:
+    # load all public keys
+    pub_points = []
+    for username in ring_usernames:
+        pt = _get_pub_xy(username)
+        if pt is None:
             return False
-        chain_data = (msg_hash
-                      + responses[i].to_bytes(32, 'big')
-                      + c.to_bytes(32, 'big')
-                      + px_i.to_bytes(32, 'big')
-                      + py_i.to_bytes(32, 'big'))
-        c = bytes_to_long(hashlib.sha256(chain_data).digest()) % order
+        pub_points.append(pt)
 
-    # ring closes if we arrive back at c0
-    return c == c0
+    # recompute each commitment and check challenge chain closes
+    # c[i+1] = H(msg || (r[i]*G + c[i]*PK[i]))  — must match stored c[i+1]
+    for i in range(n):
+        commit = _point_add(_point_mul(responses[i], G), _point_mul(challenges[i], pub_points[i]))
+        if commit is None:
+            return False
+        cx, cy = commit
+        recomputed = hash_to_scalar(message_hash + cx.to_bytes(32, 'big') + cy.to_bytes(32, 'big'), order)
+        expected_next = challenges[(i + 1) % n]
+        if recomputed != expected_next:
+            return False
+
+    return True
 
 # Ring Transaction Menu Function
 
@@ -944,9 +986,6 @@ def createRingTransaction():
     signer_data = next((u for u in userlist if u["username"] == signer), None)
     if not signer_data or not signer_data.get("active"):
         print("User is inactive.")
-        return
-
-    if not authenticateUser(signer):
         return
 
     receiver = input("Enter receiver username: ").strip()
@@ -1004,8 +1043,18 @@ def createRingTransaction():
         "timestamp": datetime.now().isoformat()
     }
 
-    # sign the transaction as one of the ring members
-    ring_sig = signRingTransaction(signer, ring_members, tx_data)
+    # check for double-spend before signing — key image is unique per (signer, tx_id)
+    key_image = computeKeyImage(signer, txn_id)
+    if key_image is None:
+        print("Could not compute key image.")
+        return
+    if isDoubleSpend(key_image):
+        print("Double-spend detected. This key image has already been used. Transaction rejected.")
+        return
+
+    # sign the transaction as one of the ring members (auto_sign=False → will prompt password)
+    signer_idx = ring_members.index(signer)
+    ring_sig = signRingTransaction(ring_members, tx_data, signer_idx, signer, auto_sign=False)
     if ring_sig is None:
         print("Ring signing failed.")
         return
@@ -1016,14 +1065,19 @@ def createRingTransaction():
     transList = loadFile(BLOCKCHAIN)
     transList.append(tx_data)
     saveFile(BLOCKCHAIN, transList)
-    print(f"Ring transaction complete: ${amt:.2f} sent anonymously to {receiver}.")
 
-# End Ring Signature Functions
+    # record key image privately — only real signer tracked, decoys are not
+    images = loadFile(KEY_IMAGES_FILE)
+    images.append(key_image)
+    saveFile(KEY_IMAGES_FILE, images)
+
+    print(f"Ring transaction complete: ${amt:.2f} sent anonymously to {receiver}.")
 
 def main():
     loadFile(USERS)
     loadFile(BLOCKCHAIN)
     loadFile(MIX_POOL_FILE)
+    loadFile(KEY_IMAGES_FILE)
     generateMissingKeys()
     setMissingPasswords()
     checkExpiredPools()
@@ -1034,12 +1088,11 @@ def main():
         print("2. Deposit")
         print("3. Withdraw")
         print("4. Create Transaction")
-        print("5. Ring Transaction (anonymous)")
-        print("6. Status Check")
-        print("7. Check Balance")
-        print("8. View Public Key")
-        print("9. Verify Transaction")
-        print("10. Exit")
+        print("5. Status Check")
+        print("6. Check Balance")
+        print("7. View Public Key")
+        print("8. Verify Transaction")
+        print("9. Exit")
         choice = input("Select an option: ").strip()
 
         if choice == "1":
@@ -1051,16 +1104,14 @@ def main():
         elif choice == "4":
             createTransaction()
         elif choice == "5":
-            createRingTransaction()
-        elif choice == "6":
             user_status()
-        elif choice == "7":
+        elif choice == "6":
             checkBalance()
-        elif choice == "8":
+        elif choice == "7":
             viewPublicKey()
-        elif choice == "9":
+        elif choice == "8":
             verifyTransaction()
-        elif choice == "10":
+        elif choice == "9":
             print("Goodbye!")
             break
         else:
