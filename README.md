@@ -47,7 +47,7 @@ A prototype blockchain system investigating privacy-preserving techniques includ
 - Pool requires a minimum of 3 participants and a time deadline
 - Funds locked on join: deducted from sender, credited to `MIXER_POOL`
 - On settlement:
-  - Outputs shuffled randomly before payout — breaks input/output ordering
+  - Outputs shuffled randomly before payout - breaks input/output ordering
   - Each payout is ring-signed using all pool participants as the ring
   - Each payout uses a different signer to avoid key image reuse
   - Ledger records `sender = "MIXER_POOL"` - original sender never stored
@@ -78,7 +78,7 @@ A prototype blockchain system investigating privacy-preserving techniques includ
 | Key Image | Per-transaction double-spend detection - unique to (signer, tx_id), stored privately [2][4] |
 | CoinJoin Mixer | Shuffled pool settlements break the sender-receiver transaction graph link [5][7] |
 
-### Ring Signature — How the Math Works
+### Ring Signature - How the Math Works
 
 Each ring member `i` contributes a challenge-response pair `(c[i], r[i])` [3][4]:
 
